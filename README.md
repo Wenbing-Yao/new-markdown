@@ -1,7 +1,7 @@
 # New Markdown
 
 These days, when I write my blogs, **latex formula** is frequetly used. I want to find a python tool that can help me convert the markdown file to html that without any style.
-However, after I tried tools like *markdown* and *markdown2*, I found some problem in both of them. The underline character `_` is always converted to *<em> ... </em>*. This is annoying ...
+However, after I tried tools like *markdown* and *markdown2*, I found some problem in both of them. The underline character `_` is always converted to `<em> ... </em>`. This is annoying ...
 
 Usually the formula is like this format:
 ```plaintext
