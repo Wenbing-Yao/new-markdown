@@ -5,14 +5,31 @@ import argparse
 from new_markdown import Markdown
 
 if __name__ == '__main__':
-    md = Markdown()
 
     parser = argparse.ArgumentParser('Parse markdown to html.')
-    parser.add_argument('--input', '-i', help='input markdown file')
-    parser.add_argument('--output', '-o', help="output html file")
+    parser.add_argument('--input',
+                        '-i',
+                        help='input markdown file',
+                        required=True)
+    parser.add_argument('--output',
+                        '-o',
+                        help="output html file",
+                        required=True)
+    parser.add_argument(
+        '--gen_dir',
+        '-g',
+        default=0,
+        help='generate a directory and place it on the top of the document')
+    parser.add_argument(
+        '--dir_title',
+        '-t',
+        default='Table of Contents',
+        help='Add a title for the directory, default: `Table of Contents`')
 
     args = parser.parse_args()
+    md = Markdown(recording_headers=args.gen_dir,
+                  directory_title=args.dir_title)
     with open(args.input, 'r') as fin:
-        output = md.convert(fin.read())
+        output = md.convert(fin.read(), final=True)
         with open(args.output, 'w') as fout:
             fout.write(output)

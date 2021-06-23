@@ -187,7 +187,8 @@ class hr(Element):
 
 class a(Element):
     def __init__(self, text, href):
-        if href.startswith('http') or href.startswith('/'):
+        if href.startswith('http') or href.startswith('/') \
+                or href.startswith('#'):
             href = href
         else:
             href = f'http://{href}'

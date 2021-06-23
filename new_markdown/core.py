@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 import re
+import secrets
 
 from new_markdown.elements import (a, blockquote, code, div, hlcode, hr, img,
                                    table, tbody, td, th, thead, tr)
@@ -38,23 +39,125 @@ link_ptn = r'(?P<pre>.*)((?<![!])[\[])(?P<text>[^]]*)[\]][\(]'\
 hr_ptn = r'^[*-]{3,}$'
 tr_line_filter = r'^[|].*[|]$'
 tr_ptn = r'[^|]*[|]'
-code_ptn = r'(?P<pre>.*)`(?P<text>[^`]*)`(?P<post>.*)'
-code_block_open_ptn = r'```(?P<language>\w*)'
-code_block_close_ptn = r'```'
+code_ptn = r'(?P<pre>.*)((?<!\\)`)(?P<text>[^`]*)((?<!\\)`)(?P<post>.*)'
+code_block_open_ptn = r'^```(?P<language>\w*)'
+code_block_close_ptn = r'^```$'
 math_latex_ptn = r'^\$\$$'
 
 
+class DirNode(object):
+    def __init__(self, level, link, text, children, parent):
+        self.level = level
+        self.link = link
+        self.text = text
+        self.children = children
+        self.parent = parent
+
+    def add_node(self, node):
+        if node.level > self.level:
+            if not self.children:
+                node.parent = self
+                self.children = [node]
+                return self
+            node.parent = self
+            self.children[-1].add_node(node)
+            return self
+
+        if node.level == self.level and self.parent:
+            node.parent = self.parent
+            self.parent.children.append(node)
+            return self.parent
+
+        parent = DirNode(level=node.level - 1,
+                         link=None,
+                         text=None,
+                         children=[self, node],
+                         parent=None)
+        self.parent = parent
+        node.parent = parent
+
+        return parent
+
+    def build_node(self, list_type='ol'):
+        if list_type == 'ul':
+            list_type = ul
+        else:
+            list_type = ol
+        ele = li(children=[])
+        if self.text:
+            ele.add_child(a(text=self.text, href=f'#{self.link}'))
+
+        if self.children:
+            children = [child.build_node() for child in self.children]
+            ele.add_child(list_type(children=children))
+
+        return ele
+
+    def show(self, depth=1):
+        print('->', '    ' * depth, f'{self}')
+        for child in self.children:
+            child.show(depth + 1)
+
+    def __str__(self):
+        return f'{self.level} - {self.link} - {self.text}'
+
+
 class Markdown(object):
-    def __init__(self) -> None:
+    def __init__(self, recording_headers=False, directory_title=None) -> None:
         super().__init__()
+        self.recording_headers = recording_headers
+        self.directory_title = directory_title
+
+        self.dir_root = None
+
+    def handle_header_stack(self, level):
+        idx = len(self.header_recordings) - 1
+        while idx >= 0 and self.header_recordings[idx].level == level:
+            idx -= 1
+
+        if idx < 0:
+            ele = ul(children=self.header_recordings)
+            self.header_recordings = [ele]
+            return
+
+        ele = ul(children=self.header_recordings[idx + 1:])
+        self.header_recordings = self.header_recordings[:idx + 1] + [ele]
+
+    def add_to_directory(self, level, hid, text):
+        node = DirNode(level=level,
+                       link=hid,
+                       text=text,
+                       children=[],
+                       parent=None)
+        if self.dir_root is None:
+            self.dir_root = node
+            return
+
+        self.dir_root = self.dir_root.add_node(node)
+
+    def extract_ul_directory(self):
+        if not self.recording_headers:
+            raise ValueError('You did not require recording headers.')
+
+        return self.table_of_contents[0][0]
+
+    def random_header_id(self, level=1):
+        return f'id-h{level}-{secrets.token_hex(6)}'
 
     def header(self, lines, start):
         info = re.search(re_head_pattern, lines[start]).groupdict()
         attrs = {}
         if info['headid']:
             attrs['id'] = info['headid']
-        ele = tags[f'h{len(info["nheads"])}'](children=info['title'].strip(),
-                                              attrs=attrs)
+        level = len(info["nheads"])
+        # print(level, info['title'])
+        if self.recording_headers and not attrs.get('id', None):
+            attrs['id'] = self.random_header_id(level=level)
+        ele = tags[f'h{level}'](children=info['title'].strip(), attrs=attrs)
+
+        if self.recording_headers:
+            self.add_to_directory(level, attrs['id'], text=info['title'])
+
         return ele, start + 1
 
     def _fetch_all(self, lines, start, startswith):
@@ -270,7 +373,7 @@ class Markdown(object):
                 continue
             elif lv == level:
                 res = re.search(list_ptn, value)
-                ele = li(children=res.groupdict()['title'].strip())
+                ele = li(children=self.code(res.groupdict()['title'].strip()))
                 children.append(ele)
                 idx += 1
                 pre_item = ele
@@ -421,7 +524,7 @@ class Markdown(object):
         self._show(lines[start], name='This should not happend!')
         return lines[start], start + 1
 
-    def convert(self, textlines):
+    def convert(self, textlines, final=False):
         start = 0
         children = []
         if isinstance(textlines, str):
@@ -437,6 +540,19 @@ class Markdown(object):
             children += [ele]
 
         cs = []
+        dir_children = []
+        if final and self.recording_headers:
+            # self.dir_root.show()
+            if self.directory_title:
+                dir_children.append(p(children=self.directory_title))
+            dire = self.dir_root.build_node()
+            if self.dir_root.text:
+                dir_children.append(div(children=dire))
+            else:
+                dir_children.append(div(children=dire.children))
+            dir_children.append(hr())
+
+        children = dir_children + children
         for c in children:
             s = f'{c}'
             if not s:
