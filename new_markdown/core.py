@@ -32,8 +32,13 @@ strong_ptn = r'(?P<pre_content>.*)((?<!\\)\*{2})(?P<content>.*)'\
     r'((?<!\\)\*{2})(?P<post_content>.*)'
 em_ptn = r'(?P<pre_content>.*)((?<!\\)\*)(?P<content>.*)((?<!\\)\*)'\
     r'(?P<post_content>.*)'
-img_ptn = r'(?P<pre>.*)![\[](?P<alt>[^]]*)[\]][\(](?P<src>[^(]*)[\)]'\
+img_ptn = r'(?P<pre>.*)![\[](?P<alt>[^]]*)[\]][\(](?P<src>[^()\[\] \t]*)'\
+    r'[ \t]*'\
+    r'\"?(?P<title>([^)\"]*)?)\"?[\)]'\
+    r'(?P<attrs>([\{]+.*[\}]+)?)'\
     r'(?P<post>.*)'
+# img_ptn = r'(?P<pre>.*)![\[](?P<alt>[^]]*)[\]][\(](?P<src>[^(]*)[\)]'\
+#     r'(?P<post>.*)'
 link_ptn = r'(?P<pre>.*)((?<![!])[\[])(?P<text>[^]]*)[\]][\(]'\
     r'(?P<href>[^(]*)[\)](?P<post>.*)'
 hr_ptn = r'^[*-]{3,}$'
@@ -43,9 +48,11 @@ code_ptn = r'(?P<pre>.*)((?<!\\)`)(?P<text>[^`]*)((?<!\\)`)(?P<post>.*)'
 code_block_open_ptn = r'^```(?P<language>\w*)'
 code_block_close_ptn = r'^```$'
 math_latex_ptn = r'^\$\$$'
+img_attr_ptns = r'(?P<name>[^=" \t]*)="(?P<value>[^"]*)"'
 
 
 class DirNode(object):
+
     def __init__(self, level, link, text, children, parent):
         self.level = level
         self.link = link
@@ -103,6 +110,7 @@ class DirNode(object):
 
 
 class Markdown(object):
+
     def __init__(self, recording_headers=False, directory_title=None) -> None:
         super().__init__()
         self.recording_headers = recording_headers
@@ -252,8 +260,18 @@ class Markdown(object):
 
         children = []
         d = res.groupdict()
+        ele = img(src=d['src'])
+        if d['alt']:
+            ele.add_attr('alt', d['alt'])
+        if d['title']:
+            ele.add_attr('title', d['title'])
+        if d['attrs']:
+            nres = re.findall(img_attr_ptns, d['attrs'][1:-1])
+            for name, value in nres:
+                ele.add_attr(name, value)
+
         children.extend(self.img(d['pre']))
-        children.append(img(src=d['src'], alt=d['alt']))
+        children.append(ele)
         children.extend(self.img(d['post']))
 
         atext = ''.join([f'{child}' for child in children])
@@ -325,7 +343,7 @@ class Markdown(object):
         children = []
         d = res.groupdict()
         children.extend(self.code(d['pre']))
-        children.append(code(children=d['text']))
+        children.append(code(children=self.handle_speci_char(d['text'])))
         children.extend(self.code(d['post']))
 
         return children
@@ -397,7 +415,8 @@ class Markdown(object):
     def handle_td_line(self, line, aligns=None):
         tds = []
         for i, text in enumerate([
-                l.strip() for l in line.split('|')[1:-1]
+                l.strip()
+                for l in line.split('|')[1:-1]
                 if l and not l.isspace()
         ]):
             align = 'center'
@@ -412,7 +431,8 @@ class Markdown(object):
     def handle_th_line(self, line, aligns=None):
         ths = []
         for i, text in enumerate([
-                l.strip() for l in line.split('|')[1:-1]
+                l.strip()
+                for l in line.split('|')[1:-1]
                 if l and not l.isspace()
         ]):
             align = 'center'
@@ -462,6 +482,12 @@ class Markdown(object):
 
         return ele, nstart
 
+    def handle_speci_in_latex(self, text):
+        return text.replace('<', '\\lt').replace('>', '\\gt')
+
+    def handle_speci_char(self, text):
+        return text.replace('<', '&lt;').replace('>', '&gt;')
+
     def code_block(self, lines, start):
         res = re.search(code_block_open_ptn, lines[start])
         d = res.groupdict()
@@ -472,7 +498,8 @@ class Markdown(object):
                                                       ptn=code_block_close_ptn)
         if matched_lines and re.search(code_block_close_ptn,
                                        matched_lines[-1]):
-            ele = hlcode(codes=os.linesep.join(matched_lines[:-1]),
+            ele = hlcode(codes=os.linesep.join(
+                [self.handle_speci_char(l) for l in matched_lines[:-1]]),
                          language=language)
             return ele, nstart
 
@@ -484,7 +511,8 @@ class Markdown(object):
                                                       start,
                                                       ptn=math_latex_ptn)
         if matched_lines and re.search(math_latex_ptn, matched_lines[-1]):
-            formula = os.linesep.join(matched_lines[:-1])
+            formula = os.linesep.join(
+                [self.handle_speci_in_latex(l) for l in matched_lines[:-1]])
             children = f'$${os.linesep}{formula}{os.linesep}$${os.linesep}'
             ele = div(children=children, attrs={'class': 'math-formula'})
 
@@ -542,14 +570,29 @@ class Markdown(object):
         cs = []
         dir_children = []
         if final and self.recording_headers:
-            # self.dir_root.show()
+            items = []
+            title_p = p(children=self.directory_title)
             if self.directory_title:
-                dir_children.append(p(children=self.directory_title))
+                items.append(title_p)
+
             dire = self.dir_root.build_node()
             if self.dir_root.text:
-                dir_children.append(div(children=dire))
+                items.append(dire)
+                dir_children.append(
+                    div(children=items,
+                        attrs={
+                            'id': 'article-directory',
+                            'class': 'article-directory'
+                        }))
             else:
-                dir_children.append(div(children=dire.children))
+                items.extend(dire.children)
+                dir_children.append(
+                    div(children=items,
+                        attrs={
+                            'id': 'article-directory',
+                            'class': 'article-directory'
+                        }))
+
             dir_children.append(hr())
 
         children = dir_children + children

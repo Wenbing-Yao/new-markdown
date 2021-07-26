@@ -2,7 +2,8 @@ init:
 	pip install -r requirements.txt
 
 test:
-	nosetests -v --nocapture tests
+	nosetests -v --nocapture tests.test_base.test_element
+	nosetests -v --nocapture tests.test_images.test_img_extension
 
 install:
 	python setup.py install

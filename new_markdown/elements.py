@@ -2,6 +2,7 @@
 
 
 class Element(object):
+
     def __init__(self,
                  tag_name='',
                  with_closing=True,
@@ -61,6 +62,7 @@ class Element(object):
 
 
 class h1(Element):
+
     def __init__(self, children, attrs=None):
         super().__init__(tag_name='h1',
                          with_closing=True,
@@ -69,6 +71,7 @@ class h1(Element):
 
 
 class h2(Element):
+
     def __init__(self, children, attrs=None):
         super().__init__(tag_name='h2',
                          with_closing=True,
@@ -77,6 +80,7 @@ class h2(Element):
 
 
 class h3(Element):
+
     def __init__(self, children, attrs=None):
         super().__init__(tag_name='h3',
                          with_closing=True,
@@ -85,6 +89,7 @@ class h3(Element):
 
 
 class h4(Element):
+
     def __init__(self, children, attrs=None):
         super().__init__(tag_name='h4',
                          with_closing=True,
@@ -93,6 +98,7 @@ class h4(Element):
 
 
 class h5(Element):
+
     def __init__(self, children, attrs=None):
         super().__init__(tag_name='h5',
                          with_closing=True,
@@ -101,6 +107,7 @@ class h5(Element):
 
 
 class h6(Element):
+
     def __init__(self, children, attrs=None):
         super().__init__(tag_name='h6',
                          with_closing=True,
@@ -109,6 +116,7 @@ class h6(Element):
 
 
 class p(Element):
+
     def __init__(self, children, attrs=None):
         super().__init__(tag_name='p',
                          with_closing=True,
@@ -117,6 +125,7 @@ class p(Element):
 
 
 class div(Element):
+
     def __init__(self, children, attrs=None):
         super().__init__(tag_name='div',
                          with_closing=True,
@@ -125,6 +134,7 @@ class div(Element):
 
 
 class em(Element):
+
     def __init__(self, children, attrs=None):
         super().__init__(tag_name='em',
                          with_closing=True,
@@ -133,6 +143,7 @@ class em(Element):
 
 
 class strong(Element):
+
     def __init__(self, children, attrs=None):
         super().__init__(tag_name='strong',
                          with_closing=True,
@@ -141,6 +152,7 @@ class strong(Element):
 
 
 class blockquote(Element):
+
     def __init__(self, children, attrs=None):
         super().__init__(tag_name='blockquote',
                          with_closing=True,
@@ -149,6 +161,7 @@ class blockquote(Element):
 
 
 class ol(Element):
+
     def __init__(self, children, attrs=None):
         super().__init__(tag_name='ol',
                          with_closing=True,
@@ -157,6 +170,7 @@ class ol(Element):
 
 
 class li(Element):
+
     def __init__(self, children, attrs=None):
         super().__init__(tag_name='li',
                          with_closing=True,
@@ -165,6 +179,7 @@ class li(Element):
 
 
 class ul(Element):
+
     def __init__(self, children, attrs=None):
         super().__init__(tag_name='ul',
                          with_closing=True,
@@ -173,6 +188,7 @@ class ul(Element):
 
 
 class code(Element):
+
     def __init__(self, children, attrs=None):
         super().__init__(tag_name='code',
                          with_closing=True,
@@ -181,11 +197,13 @@ class code(Element):
 
 
 class hr(Element):
+
     def __init__(self, attrs=None):
         super().__init__(tag_name='hr', with_closing=False, attrs=attrs)
 
 
 class a(Element):
+
     def __init__(self, text, href):
         if href.startswith('http') or href.startswith('/') \
                 or href.startswith('#'):
@@ -199,6 +217,7 @@ class a(Element):
 
 
 class pre(Element):
+
     def __init__(self, children, attrs=None):
         super().__init__(tag_name='pre',
                          with_closing=True,
@@ -207,16 +226,15 @@ class pre(Element):
 
 
 class img(Element):
-    def __init__(self, src, alt=''):
-        super().__init__(tag_name='img',
-                         with_closing=False,
-                         attrs={
-                             'src': src,
-                             'alt': alt
-                         })
+
+    def __init__(self, src, **extras):
+        attrs = {'src': src}
+        attrs.update(extras)
+        super().__init__(tag_name='img', with_closing=False, attrs=attrs)
 
 
 class hlcode(Element):
+
     def __init__(self, codes, language=None, attrs=None):
         if attrs is None:
             attrs = {}
@@ -230,7 +248,14 @@ class hlcode(Element):
 
 
 class table(Element):
+
     def __init__(self, children, attrs=None):
+        _attrs = {'class': 'table'}
+        if attrs is None:
+            attrs = _attrs
+        else:
+            attrs.update(_attrs)
+
         super().__init__(tag_name='table',
                          with_closing=True,
                          attrs=attrs,
@@ -238,6 +263,7 @@ class table(Element):
 
 
 class thead(Element):
+
     def __init__(self, children, attrs=None):
         super().__init__(tag_name='thead',
                          with_closing=True,
@@ -246,6 +272,7 @@ class thead(Element):
 
 
 class tbody(Element):
+
     def __init__(self, children, attrs=None):
         super().__init__(tag_name='tbody',
                          with_closing=True,
@@ -254,6 +281,7 @@ class tbody(Element):
 
 
 class tr(Element):
+
     def __init__(self, children, attrs=None):
         super().__init__(tag_name='tr',
                          with_closing=True,
@@ -262,6 +290,7 @@ class tr(Element):
 
 
 class th(Element):
+
     def __init__(self, children, attrs=None):
         super().__init__(tag_name='th',
                          with_closing=True,
@@ -270,6 +299,7 @@ class th(Element):
 
 
 class td(Element):
+
     def __init__(self, children, attrs=None):
         super().__init__(tag_name='td',
                          with_closing=True,

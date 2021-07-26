@@ -15,7 +15,22 @@ or single line:  $ ... $
 
 I want to keep these formula as they are, and then, the *mathjax* is used to automatically handle these formulas in the web pages.
 
-This package is completed in one day. It only satisfy myself, and there are many bugs in it. If you found some bugs, please let me known.
+## New Feature(s)
+
+1. image attribute extension
+
+You can add attributes for your images with `markdown` syntax like this now:
+```markdown
+![Image Alt Text](http:/path.to.image/name.logo "Image Title"){attrname1="attrvalue1" attrname2="attrvalue2"}
+```
+
+The extracted html is:
+```html
+<img src="http:/path.to.image/name.logo" alt="Image Alt Text" title="Image Title" attrname1="attrvalue1" attrname2="attrvalue2">
+```
+
+The attribute is in the braces `{}`, such as `{style="width:100%; max-width:500px;"}`. You can add multiple attributes seperated with blank space. The attribute value should be wihtin double quotation marks `""`;
+
 
 ## Installation
 Under the package directory, install it with:

@@ -14,6 +14,7 @@ from new_markdown.elements import hr
 
 
 class BasicTestCase(unittest.TestCase):
+
     def test_base(self):
         ele = Element(tag_name='h1',
                       with_closing=True,
@@ -29,8 +30,10 @@ class BasicTestCase(unittest.TestCase):
 
 
 class MarkdownTestCase(unittest.TestCase):
+
     def setUp(self) -> None:
         self.md = Markdown()
+        self.maxDiff = None
         return super().setUp()
 
     def show(self, text, name='***'):
@@ -274,6 +277,7 @@ This is a safe url: [谷歌](https://www.google.com)!
 """
         # open('test.html', 'w').write(html)
         # self.show(html)
+        # print(html)
         self.assertEqual(html.strip(), result.strip())
 
     def test_table(self):
@@ -317,7 +321,7 @@ This is a safe url: [谷歌](https://www.google.com)!
 <hr>
 <p>This is a url: <strong><a href="http://www.baidu.com">www.baidu.com</a></strong>!<br>This is a safe url: <a href="https://www.google.com">谷歌</a>!图片 url: <a href="https://google.com"><img src="https://d33wubrfki0l68.cloudfront.net/e7ed9fe4bafe46e275c807d63591f85f9ab246ba/e2d28/assets/images/tux.png" alt="test Image"></a>!!<br></p>
 <hr>
-<table><thead><tr><th style="text-align: left">Syntax</th><th style="text-align: center">Description</th><th style="text-align: right">Test Text</th></tr></thead><tbody><tr><td style="text-align: left"><em>Header</em></td><td style="text-align: center"><a href="https://www.google.com">谷歌</a></td><td style="text-align: right">Here's this</td></tr><tr><td style="text-align: left">Paragraph</td><td style="text-align: center"><strong><em>Text</em></strong></td><td style="text-align: right">At the command prompt, type <code>**nano**</code>.</td></tr></tbody></table>
+<table class="table"><thead><tr><th style="text-align: left">Syntax</th><th style="text-align: center">Description</th><th style="text-align: right">Test Text</th></tr></thead><tbody><tr><td style="text-align: left"><em>Header</em></td><td style="text-align: center"><a href="https://www.google.com">谷歌</a></td><td style="text-align: right">Here's this</td></tr><tr><td style="text-align: left">Paragraph</td><td style="text-align: center"><strong><em>Text</em></strong></td><td style="text-align: right">At the command prompt, type <code>**nano**</code>.</td></tr></tbody></table>
 """
         # open('test.html', 'w').write(html)
         # self.show(html)
@@ -415,10 +419,10 @@ class Markdown(object):
 <hr>
 <p>This is a url: <strong><a href="http://www.baidu.com">www.baidu.com</a></strong>!<br>This is a safe url: <a href="https://www.google.com">谷歌</a>!图片 url: <a href="https://google.com"><img src="https://d33wubrfki0l68.cloudfront.net/e7ed9fe4bafe46e275c807d63591f85f9ab246ba/e2d28/assets/images/tux.png" alt="test Image"></a>!!<br></p>
 <hr>
-<table><thead><tr><th style="text-align: left">Syntax</th><th style="text-align: center">Description</th><th style="text-align: right">Test Text</th></tr></thead><tbody><tr><td style="text-align: left"><em>Header</em></td><td style="text-align: center"><a href="https://www.google.com">谷歌</a></td><td style="text-align: right">Here's this</td></tr><tr><td style="text-align: left">Paragraph</td><td style="text-align: center"><strong><em>Text</em></strong></td><td style="text-align: right">At the command prompt, type <code>**nano**</code>.</td></tr></tbody></table>
+<table class="table"><thead><tr><th style="text-align: left">Syntax</th><th style="text-align: center">Description</th><th style="text-align: right">Test Text</th></tr></thead><tbody><tr><td style="text-align: left"><em>Header</em></td><td style="text-align: center"><a href="https://www.google.com">谷歌</a></td><td style="text-align: right">Here's this</td></tr><tr><td style="text-align: left">Paragraph</td><td style="text-align: center"><strong><em>Text</em></strong></td><td style="text-align: right">At the command prompt, type <code>**nano**</code>.</td></tr></tbody></table>
 <pre class="language-python"><code class="language-python">
 class Markdown(object):
-    def __init__(self) -> None:
+    def __init__(self) -&gt; None:
         super().__init__()
 
     def header(self, lines, start):
@@ -436,7 +440,7 @@ class Markdown(object):
 
         matched_lines = []
         while True:
-            if start >= len(lines) or not lines[start].startswith(startswith):
+            if start &gt;= len(lines) or not lines[start].startswith(startswith):
                 break
             matched_lines.append(lines[start])
             start += 1
@@ -446,7 +450,7 @@ class Markdown(object):
     def _fetch_all_ptn(self, lines, start, ptn):
         matched_lines = []
         while True:
-            if start >= len(lines) or not re.search(ptn, lines[start]):
+            if start &gt;= len(lines) or not re.search(ptn, lines[start]):
                 break
 
             matched_lines.append(lines[start])
@@ -457,7 +461,7 @@ class Markdown(object):
     def _fetch_all_until(self, lines, start, ptn):
         matched_lines = []
         while True:
-            if start >= len(lines) or re.search(ptn, lines[start]):
+            if start &gt;= len(lines) or re.search(ptn, lines[start]):
                 break
 
             matched_lines.append(lines[start])
