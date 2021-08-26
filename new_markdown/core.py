@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import hashlib
 import os
 import re
 import secrets
@@ -49,6 +50,10 @@ code_block_open_ptn = r'^```(?P<language>\w*)'
 code_block_close_ptn = r'^```$'
 math_latex_ptn = r'^\$\$$'
 img_attr_ptns = r'(?P<name>[^=" \t]*)="(?P<value>[^"]*)"'
+single_line_math_latex_ptn = r'^(?P<pre>.*)((?<!\\)\$)'\
+    r'(?P<formula>[^$]*)((?<!\\)\$)(?P<post>.*)$'
+formula_placement_ptn = r'^(?P<pre>.*)'\
+    r'###FML[>](?P<digest>[0-9a-f]{40})[<]###(?P<post>.*)$'
 
 
 class DirNode(object):
@@ -117,6 +122,7 @@ class Markdown(object):
         self.directory_title = directory_title
 
         self.dir_root = None
+        self.forward_buffer = {}
 
     def handle_header_stack(self, level):
         idx = len(self.header_recordings) - 1
@@ -412,8 +418,39 @@ class Markdown(object):
         ele = hr()
         return ele, start + 1
 
+    def keep_formula(self, line):
+        rem = re.search(single_line_math_latex_ptn, line)
+        if not rem:
+            return line
+
+        dct = rem.groupdict()
+        formula = dct['formula']
+        digest = hashlib.sha1(formula.encode()).hexdigest()
+        placeholder = f'###FML>{digest}<###'
+        self.forward_buffer[digest] = formula
+        return self.keep_formula(
+            dct["pre"]) + placeholder + self.unkeep_formula(dct["post"])
+
+    def unkeep_formula(self, line):
+        rem = re.search(formula_placement_ptn, line)
+        if not rem:
+            return line
+
+        res = rem.groupdict()
+
+        return self.unkeep_formula(res['pre']) + \
+            '$' + \
+            self.forward_buffer[res['digest']] + \
+            '$' + \
+            self.unkeep_formula(res['post'])
+
     def handle_td_line(self, line, aligns=None):
         tds = []
+        need_keep = False
+        if '$' in line:
+            need_keep = True
+            line = self.keep_formula(line)
+
         for i, text in enumerate([
                 l.strip()
                 for l in line.split('|')[1:-1]
@@ -423,7 +460,8 @@ class Markdown(object):
             if aligns is not None and i < len(aligns):
                 align = aligns[i]
             tds.append(
-                td(children=self.code(text),
+                td(children=self.code(
+                    text if not need_keep else self.unkeep_formula(text)),
                    attrs={'style': f'text-align: {align}'}))
 
         return tr(children=tds)

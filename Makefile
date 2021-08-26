@@ -4,6 +4,7 @@ init:
 test:
 	nosetests -v --nocapture tests.test_base.test_element
 	nosetests -v --nocapture tests.test_images.test_img_extension
+	nosetests -v --nocapture tests.test_formula_in_table
 
 install:
 	python setup.py install
