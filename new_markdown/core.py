@@ -452,9 +452,8 @@ class Markdown(object):
             line = self.keep_formula(line)
 
         for i, text in enumerate([
-                l.strip()
-                for l in line.split('|')[1:-1]
-                if l and not l.isspace()
+                l.strip() for l in line.split('|')[1:-1]
+                # if l and not l.isspace()
         ]):
             align = 'center'
             if aligns is not None and i < len(aligns):
